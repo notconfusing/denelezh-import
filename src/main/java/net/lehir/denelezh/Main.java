@@ -15,8 +15,8 @@ import org.wikidata.wdtk.dumpfiles.MwDumpFile;
 import org.wikidata.wdtk.dumpfiles.MwLocalDumpFile;
 
 public class Main {
-	
-	private static final Logger LOGGER = Logger.getLogger(Main.class);
+    
+    private static final Logger LOGGER = Logger.getLogger(Main.class);
     
     private static final String DUMP_DIRECTORY = "/home/wikidata/";
     private static final String TMP_DIRECTORY = "/tmp/";
@@ -55,7 +55,7 @@ public class Main {
             
             try (FileWriter dumpFW = new FileWriter(TMP_DIRECTORY + "dump.csv");
                     BufferedWriter dumpBW = new BufferedWriter(dumpFW);
-            		FileWriter humanFW = new FileWriter(TMP_DIRECTORY + "human.csv");
+                    FileWriter humanFW = new FileWriter(TMP_DIRECTORY + "human.csv");
                     BufferedWriter humanBW = new BufferedWriter(humanFW);
                     FileWriter humanCountryFW = new FileWriter(TMP_DIRECTORY + "human_country.csv");
                     BufferedWriter humanCountryBW = new BufferedWriter(humanCountryFW);
@@ -64,7 +64,11 @@ public class Main {
                     FileWriter humanSiteLinkFW = new FileWriter(TMP_DIRECTORY + "human_sitelink.csv");
                     BufferedWriter humanSiteLinkBW = new BufferedWriter(humanSiteLinkFW);
                     FileWriter labelFW = new FileWriter(TMP_DIRECTORY + "label.csv");
-                    BufferedWriter labelBW = new BufferedWriter(labelFW)) {
+                    BufferedWriter labelBW = new BufferedWriter(labelFW);
+                    FileWriter occupationFileWriter = new FileWriter(TMP_DIRECTORY + "occupation.csv");
+                    BufferedWriter occupationBufferedWriter = new BufferedWriter(occupationFileWriter);
+                    FileWriter occupation_parentFileWriter = new FileWriter(TMP_DIRECTORY + "occupation_parent.csv");
+                    BufferedWriter occupation_parentBufferedWriter = new BufferedWriter(occupation_parentFileWriter)) {
                 
                 String dumpDateStamp = dumpFile.getDateStamp();
                 dumpDateStamp = dumpDateStamp.substring(0, 4) + "-" + dumpDateStamp.substring(4, 6) + "-" + dumpDateStamp.substring(6, 8);
@@ -76,33 +80,29 @@ public class Main {
                 
                 dumpProcessingController.processDump(dumpFile);
                 
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-            
-            try (FileWriter occupationFileWriter = new FileWriter(TMP_DIRECTORY + "occupation.csv");
-                    BufferedWriter occupationBufferedWriter = new BufferedWriter(occupationFileWriter);
-                    FileWriter occupation_parentFileWriter = new FileWriter(TMP_DIRECTORY + "occupation_parent.csv");
-                    BufferedWriter occupation_parentBufferedWriter = new BufferedWriter(occupation_parentFileWriter)) {
-            	Map<Long, Occupation> occupations = Occupation.getOccupations();
-            	for (Long occupationId : occupations.keySet()) {
-            		Occupation occupation = occupations.get(occupationId);
-            		if (occupation.isTrueOccupation) {
-	        			occupationBufferedWriter.write(occupationId + "\n");
-	        			HashSet<Long> allParents = new HashSet<>();
-	        			occupation.getAllParents(allParents);
-	        			for (Long parentId : allParents) {
-	        				if (parentId != occupationId) {
-		        				Occupation parent = Occupation.getOccupation(parentId);
-		        				if (parent.isTrueOccupation) {
-		        					occupation_parentBufferedWriter.write(occupationId + "," + parentId + "\n");
-		        				}
-	        				}
-	        			}
-            		}
-            	}
+                LOGGER.info("Occupations...");
+                
+                Map<Long, Occupation> occupations = Occupation.getOccupations();
+                for (Long occupationId : occupations.keySet()) {
+                    Occupation occupation = occupations.get(occupationId);
+                    if (occupation.isTrueOccupation) {
+                        occupationBufferedWriter.write(occupationId + "\n");
+                        HashSet<Long> allParents = new HashSet<>();
+                        occupation.getAllParents(allParents);
+                        for (Long parentId : allParents) {
+                            if (parentId != occupationId) {
+                                Occupation parent = Occupation.getOccupation(parentId);
+                                if (parent.isTrueOccupation) {
+                                    occupation_parentBufferedWriter.write(occupationId + "," + parentId + "\n");
+                                }
+                            }
+                        }
+                    }
+                }
+                
             } catch (Exception e) {
                 LOGGER.error(e);
+                System.exit(1);
             }
             
         }

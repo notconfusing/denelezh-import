@@ -37,7 +37,7 @@ public class HumanProcessor implements EntityDocumentProcessor {
     
     public static final String ITEM_HUMAN = "Q5";
     
-    private int humansCount = 0;
+    //private int humansCount = 0;
     
     public HumanProcessor(BufferedWriter humanBW, BufferedWriter humanCountryBW, BufferedWriter humanOccupationBW, BufferedWriter humanSiteLinkBW, BufferedWriter labelBW) {
         this.humanBW = humanBW;
@@ -64,8 +64,8 @@ public class HumanProcessor implements EntityDocumentProcessor {
             if (!rank.equals(StatementRank.DEPRECATED)) {
                 Value value = statement.getValue();
                 if (value != null) {
-                	String propertyId = statement.getClaim().getMainSnak().getPropertyId().getId();
-            		if (values.containsKey(propertyId)) {
+                    String propertyId = statement.getClaim().getMainSnak().getPropertyId().getId();
+                    if (values.containsKey(propertyId)) {
                         if (!values.get(propertyId).containsKey(rank)) {
                             values.get(propertyId).put(rank, new HashSet<Value>());
                         }
@@ -75,35 +75,35 @@ public class HumanProcessor implements EntityDocumentProcessor {
             }
         }
         
-        String itemId = itemDocument.getItemId().getId().substring(1);
+        String itemId = itemDocument.getEntityId().getId().substring(1);
         
         Set<Value> instanceOf = getBestValues(values.get(PROPERTY_INSTANCE_OF));
         if (containsId(instanceOf, ITEM_HUMAN)) {
-        	humansCount++;
-        	
+            //humansCount++;
+            
             String genderString = "\\N";
             EntityIdValue gender = (EntityIdValue) getUniqueBestValue(values.get(PROPERTY_GENDER));
             if (gender != null) {
-            	genderString = gender.getId().substring(1);
+                genderString = gender.getId().substring(1);
             }
             else if (!getBestValues(values.get(PROPERTY_GENDER)).isEmpty()) {
-            	genderString = "-1";
+                genderString = "-1";
             }
-        	
+            
             TimeValue dateOfBirth = (TimeValue) getUniqueBestValue(values.get(PROPERTY_DATE_OF_BIRTH));
             if (dateOfBirth != null) {
                 if (dateOfBirth.getPrecision() < TimeValue.PREC_YEAR) {
                     dateOfBirth = null;
                 }
             } else {
-            	Set<Value> bestDatesOfBirth = getBestValues(values.get(PROPERTY_DATE_OF_BIRTH));
-            	if (!bestDatesOfBirth.isEmpty() && isYearAlwaysEqual(bestDatesOfBirth)) {
+                Set<Value> bestDatesOfBirth = getBestValues(values.get(PROPERTY_DATE_OF_BIRTH));
+                if (!bestDatesOfBirth.isEmpty() && isYearAlwaysEqual(bestDatesOfBirth)) {
                     dateOfBirth = (TimeValue) bestDatesOfBirth.iterator().next();
                 }
             }
             String dateOfBirthString = "\\N";
             if (dateOfBirth != null) {
-            	dateOfBirthString = Long.toString(dateOfBirth.getYear());
+                dateOfBirthString = Long.toString(dateOfBirth.getYear());
             }
             
             Set<Long> countries = new TreeSet<>();
@@ -114,12 +114,12 @@ public class HumanProcessor implements EntityDocumentProcessor {
             addIds(occupations, values.get(PROPERTY_OCCUPATION).get(StatementRank.PREFERRED));
             addIds(occupations, values.get(PROPERTY_OCCUPATION).get(StatementRank.NORMAL));
             for (Long occupationId : occupations) {
-            	Occupation.getOccupation(occupationId).isTrueOccupation = true;
+                Occupation.getOccupation(occupationId).isTrueOccupation = true;
             }
             
             Set<String> siteLinks = new TreeSet<>();
             for (SiteLink siteLink : itemDocument.getSiteLinks().values()) {
-            	siteLinks.add(siteLink.getSiteKey());
+                siteLinks.add(siteLink.getSiteKey());
             }
             
             try {
@@ -131,7 +131,7 @@ public class HumanProcessor implements EntityDocumentProcessor {
                     humanOccupationBW.write(itemId + "," + occupation + "\n");
                 }
                 for (String siteLink : siteLinks) {
-                	humanSiteLinkBW.write(itemId + "," + siteLink + "\n");
+                    humanSiteLinkBW.write(itemId + "," + siteLink + "\n");
                 }
             } catch (IOException e) {
                 e.printStackTrace();
@@ -141,24 +141,24 @@ public class HumanProcessor implements EntityDocumentProcessor {
         
         Set<Value> subclassOf = getBestValues(values.get(PROPERTY_SUBCLASS_OF));
         if (!subclassOf.isEmpty()) {
-        	Occupation occupation = Occupation.getOccupation(Long.parseLong(itemId));
-        	for (Value v : subclassOf) {
-        		EntityIdValue value = (EntityIdValue) v;
-        		occupation.addParent(Long.parseLong(value.getId().substring(1)));
-        	}
+            Occupation occupation = Occupation.getOccupation(Long.parseLong(itemId));
+            for (Value v : subclassOf) {
+                EntityIdValue value = (EntityIdValue) v;
+                occupation.addParent(Long.parseLong(value.getId().substring(1)));
+            }
         }
         
         try {
-        	String label = itemDocument.findLabel("en");
-        	if (label != null) {
-        		labelBW.write(itemId + ",\"" + label.replace("\\", "\\\\").replace("\"", "\\\"") + "\"\n");
-        	}
+            String label = itemDocument.findLabel("en");
+            if (label != null) {
+                labelBW.write(itemId + ",\"" + label.replace("\\", "\\\\").replace("\"", "\\\"") + "\"\n");
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }
         
         /*if (humansCount >= 10000) {
-        	throw new RuntimeException();
+            throw new RuntimeException();
         }*/
         
     }
@@ -192,17 +192,17 @@ public class HumanProcessor implements EntityDocumentProcessor {
     }
     
     private boolean containsId(Set<Value> values, String id) {
-    	for (Value v : values) {
-    		EntityIdValue value = (EntityIdValue) v;
-    		if (value.getId().equals(id)) {
-    			return true;
-    		}
-    	}
-    	return false;
+        for (Value v : values) {
+            EntityIdValue value = (EntityIdValue) v;
+            if (value.getId().equals(id)) {
+                return true;
+            }
+        }
+        return false;
     }
     
     private Value getUniqueBestValue(Map<StatementRank, Set<Value>> values) {
-    	Set<Value> bestValues = getBestValues(values);
+        Set<Value> bestValues = getBestValues(values);
         if (bestValues.size() == 1) {
             return bestValues.iterator().next();
         }
