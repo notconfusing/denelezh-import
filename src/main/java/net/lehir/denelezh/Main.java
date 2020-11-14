@@ -18,7 +18,7 @@ public class Main {
     
     private static final Logger LOGGER = Logger.getLogger(Main.class);
     
-    private static final String DUMP_DIRECTORY = "/home/wikidata/";
+    private static final String DUMP_DIRECTORY = "/data/project/denelezh";
     private static final String TMP_DIRECTORY = "/tmp/";
     
     public static void configureLogging() {
