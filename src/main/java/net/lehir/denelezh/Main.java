@@ -18,7 +18,6 @@ public class Main {
     
     private static final Logger LOGGER = Logger.getLogger(Main.class);
     
-    //private static final String DUMP_DIRECTORY = "/srv/dumpfiles/downloaded";
     private static final String DUMP_DIRECTORY = "/srv/";
     private static final String TMP_DIRECTORY = "/srv/tmp/";
     

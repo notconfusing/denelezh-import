@@ -3,6 +3,9 @@
 `denelezh-import` is a Java project that handles the first step of import from Wikidata JSON dumps to Denelezh, generating CSV files using Wikidata Toolkit.
 
 ## Installation
+Ensure that java is installed.
+    
+    sudo apt install default-jdk
 
 Use Maven to generate the binary `target/denelezh-import.jar`:
 
