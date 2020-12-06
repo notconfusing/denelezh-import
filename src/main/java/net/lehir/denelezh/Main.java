@@ -2,8 +2,10 @@ package net.lehir.denelezh;
 
 import java.io.BufferedWriter;
 import java.io.FileWriter;
+import java.io.File;
 import java.util.HashSet;
 import java.util.Map;
+
 
 import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Level;
@@ -19,7 +21,7 @@ public class Main {
     private static final Logger LOGGER = Logger.getLogger(Main.class);
     
     private static final String DUMP_DIRECTORY = "/srv/";
-    private static final String TMP_DIRECTORY = "/srv/tmp/";
+    private static String TMP_DIRECTORY = "/srv/tmp/";
     
     public static void configureLogging() {
         ConsoleAppender consoleAppender = new ConsoleAppender();
@@ -48,6 +50,18 @@ public class Main {
             dumpProcessingController.setOfflineMode(false);
             //dumpFile = new MwLocalDumpFile(DUMP_DIRECTORY + "dumpfiles/wikidatawiki/json-" + date + "/" + date + ".json.gz", DumpContentType.JSON, date, "wikidatawiki");
             dumpFile = new MwLocalDumpFile(DUMP_DIRECTORY + "dumpfiles/wikidatawiki/" + date + ".json.gz", DumpContentType.JSON, date, "wikidatawiki");
+	    TMP_DIRECTORY = TMP_DIRECTORY + date + "/";
+
+	    String envMaxHumans = System.getenv("HUMANIKI_MAX_HUMANS");
+	    Integer maxHumansToProcess = envMaxHumans != null? Integer.parseInt(envMaxHumans) : null;
+	    if (maxHumansToProcess != null){
+		TMP_DIRECTORY = TMP_DIRECTORY + maxHumansToProcess + "/"; 
+	    }
+	    File directory = new File(TMP_DIRECTORY);
+	    if (! directory.exists()){
+		directory.mkdirs();
+	    }
+
         } else {
             System.out.println("Invalid number of arguments.");
         }

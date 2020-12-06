@@ -30,16 +30,18 @@ public class HumanProcessor implements EntityDocumentProcessor {
     public static final String PROPERTY_OCCUPATION = "P106";
 
     public static final String ITEM_HUMAN = "Q5";
+    public static final String ITEM_SOVEREIGN_STATE = "Q3624078";
+    public static final String ITEM_COUNTRY = "Q6256";
     public static final String ITEM_OCCUPATION = "Q12737077";
     public static final String ITEM_GENDER_IDENTITY = "Q48264";
     public static final String ITEM_SEX_OF_HUMANS = "Q4369513";
-    public static final String ITEM_COUNTRY = "Q6256";
-    public static final String ITEM_SOVEREIGN_STATE = "Q3624078";
     //array of strings
     public static final String[] itemLabelArray = {ITEM_HUMAN, ITEM_OCCUPATION, ITEM_GENDER_IDENTITY, ITEM_SEX_OF_HUMANS, ITEM_COUNTRY, ITEM_SOVEREIGN_STATE};
     //initialize an immutable list from array using asList method
     public static final List<String> LABEL_ITEMS = Arrays.asList(itemLabelArray);
     private int humansCount = 0;
+    private String envMaxHumans = System.getenv("HUMANIKI_MAX_HUMANS");
+    private Integer maxHumansToProcess = envMaxHumans != null? Integer.parseInt(envMaxHumans) : null;
 
     public HumanProcessor(BufferedWriter humanBW, BufferedWriter humanCountryBW, BufferedWriter humanOccupationBW, BufferedWriter humanSiteLinkBW, BufferedWriter labelBW) {
         this.humanBW = humanBW;
@@ -82,6 +84,13 @@ public class HumanProcessor implements EntityDocumentProcessor {
         Set<Value> instanceOf = getBestValues(values.get(PROPERTY_INSTANCE_OF));
         if (containsId(instanceOf, ITEM_HUMAN)) {
             humansCount++;
+	    if (maxHumansToProcess != null){
+		boolean processedMaxHumans = (humansCount > maxHumansToProcess);
+		if (processedMaxHumans) {
+		    throw new RuntimeException("Hardcoded stop at "+ maxHumansToProcess + " humans.");
+		}
+
+	    }
 
             String genderString = "\\N";
             EntityIdValue gender = (EntityIdValue) getUniqueBestValue(values.get(PROPERTY_GENDER));
@@ -138,10 +147,10 @@ public class HumanProcessor implements EntityDocumentProcessor {
                 e.printStackTrace();
             }
 
-            // add a label if it's something we're interested in
-            writeLabelIfNeeded(itemDocument, itemId, instanceOf);
-
         }
+
+	// add a label if it's something we're interested in
+	writeLabelIfNeeded(itemDocument, itemId, instanceOf);
 
         Set<Value> subclassOf = getBestValues(values.get(PROPERTY_SUBCLASS_OF));
         if (!subclassOf.isEmpty()) {
@@ -150,9 +159,6 @@ public class HumanProcessor implements EntityDocumentProcessor {
                 EntityIdValue value = (EntityIdValue) v;
                 occupation.addParent(Long.parseLong(value.getId().substring(1)));
             }
-        }
-        if (humansCount >= 10000) {
-            throw new RuntimeException();
         }
 
     }
@@ -198,11 +204,13 @@ public class HumanProcessor implements EntityDocumentProcessor {
     private void writeLabelIfNeeded(ItemDocument itemDocument, String itemId, Set<Value> instanceOf){
         // loop over the label items
         for (String labelitem: LABEL_ITEMS) {
+	    //System.out.println("Label item is "+ labelitem + " itemid " + itemId);
             if (containsId(instanceOf, labelitem)) {
+		//System.out.println("did contain instance of label item");
                 try {
                     String label = itemDocument.findLabel("en");
                     if (label != null) {
-                        labelBW.write(itemId + ",\"" + label.replace("\\", "\\\\").replace("\"", "\\\"") + "\"\n");
+			labelBW.write(itemId + ",\"" + label.replace("\\", "\\\\").replace("\"", "\\\"") + "\"\n");
                         return;
                     }
                 } catch (IOException e) {
