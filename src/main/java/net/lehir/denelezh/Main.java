@@ -17,12 +17,12 @@ import org.wikidata.wdtk.dumpfiles.MwDumpFile;
 import org.wikidata.wdtk.dumpfiles.MwLocalDumpFile;
 
 public class Main {
-    
+
     private static final Logger LOGGER = Logger.getLogger(Main.class);
-    
-    private static final String DUMP_DIRECTORY = "/srv/";
-    private static String TMP_DIRECTORY = "/srv/tmp/";
-    
+
+    private static final String DUMP_DIRECTORY = System.getenv("HUMANIKI_DUMP_DIR");
+    private static String TMP_DIRECTORY = System.getenv("HUMANIKI_WDTK_OUT_DIR");
+
     public static void configureLogging() {
         ConsoleAppender consoleAppender = new ConsoleAppender();
         String pattern = "%d{yyyy-MM-dd HH:mm:ss} %-5p - %m%n";
@@ -31,72 +31,75 @@ public class Main {
         consoleAppender.activateOptions();
         Logger.getRootLogger().addAppender(consoleAppender);
     }
-    
+
     public static void main(String[] args) {
-        
+
         configureLogging();
-        
+
         LOGGER.info("Starting...");
-        
+
         System.setProperty("user.dir", DUMP_DIRECTORY);
         DumpProcessingController dumpProcessingController = new DumpProcessingController("wikidatawiki");
-        
+
         MwDumpFile dumpFile = null;
         if (args.length == 0) {
             dumpProcessingController.setOfflineMode(false);
             dumpFile = dumpProcessingController.getMostRecentDump(DumpContentType.JSON);
+            TMP_DIRECTORY = TMP_DIRECTORY + "latest/";
         } else if (args.length == 1) {
             String date = args[0];
             dumpProcessingController.setOfflineMode(false);
-            //dumpFile = new MwLocalDumpFile(DUMP_DIRECTORY + "dumpfiles/wikidatawiki/json-" + date + "/" + date + ".json.gz", DumpContentType.JSON, date, "wikidatawiki");
-            dumpFile = new MwLocalDumpFile(DUMP_DIRECTORY + "dumpfiles/wikidatawiki/" + date + ".json.gz", DumpContentType.JSON, date, "wikidatawiki");
-	    TMP_DIRECTORY = TMP_DIRECTORY + date + "/";
+            dumpFile = new MwLocalDumpFile(DUMP_DIRECTORY + "dumpfiles/wikidatawiki/json-" + date + "/" + date + ".json.gz", DumpContentType.JSON, date, "wikidatawiki");
 
-	    String envMaxHumans = System.getenv("HUMANIKI_MAX_HUMANS");
-	    Integer maxHumansToProcess = envMaxHumans != null? Integer.parseInt(envMaxHumans) : null;
-	    if (maxHumansToProcess != null){
-		TMP_DIRECTORY = TMP_DIRECTORY + maxHumansToProcess + "/"; 
-	    }
-	    File directory = new File(TMP_DIRECTORY);
-	    if (! directory.exists()){
-		directory.mkdirs();
-	    }
+            // if not downloading but using linked directory on wmcloud, need to programatically distinguish between dev and prod.
+            //dumpFile = new MwLocalDumpFile(DUMP_DIRECTORY + "dumpfiles/wikidatawiki/" + date + ".json.gz", DumpContentType.JSON, date, "wikidatawiki");
+            TMP_DIRECTORY = TMP_DIRECTORY + date + "/";
+
+            String envMaxHumans = System.getenv("HUMANIKI_MAX_HUMANS");
+            Integer maxHumansToProcess = envMaxHumans != null ? Integer.parseInt(envMaxHumans) : null;
+            if (maxHumansToProcess != null) {
+                TMP_DIRECTORY = TMP_DIRECTORY + maxHumansToProcess + "/";
+            }
+            File directory = new File(TMP_DIRECTORY);
+            if (!directory.exists()) {
+                directory.mkdirs();
+            }
 
         } else {
             System.out.println("Invalid number of arguments.");
         }
-        
+
         if (dumpFile != null) {
-            
+
             try (FileWriter dumpFW = new FileWriter(TMP_DIRECTORY + "dump.csv");
-                    BufferedWriter dumpBW = new BufferedWriter(dumpFW);
-                    FileWriter humanFW = new FileWriter(TMP_DIRECTORY + "human.csv");
-                    BufferedWriter humanBW = new BufferedWriter(humanFW);
-                    FileWriter humanCountryFW = new FileWriter(TMP_DIRECTORY + "human_country.csv");
-                    BufferedWriter humanCountryBW = new BufferedWriter(humanCountryFW);
-                    FileWriter humanOccupationFW = new FileWriter(TMP_DIRECTORY + "human_occupation.csv");
-                    BufferedWriter humanOccupationBW = new BufferedWriter(humanOccupationFW);
-                    FileWriter humanSiteLinkFW = new FileWriter(TMP_DIRECTORY + "human_sitelink.csv");
-                    BufferedWriter humanSiteLinkBW = new BufferedWriter(humanSiteLinkFW);
-                    FileWriter labelFW = new FileWriter(TMP_DIRECTORY + "label.csv");
-                    BufferedWriter labelBW = new BufferedWriter(labelFW);
-                    FileWriter occupationFileWriter = new FileWriter(TMP_DIRECTORY + "occupation.csv");
-                    BufferedWriter occupationBufferedWriter = new BufferedWriter(occupationFileWriter);
-                    FileWriter occupation_parentFileWriter = new FileWriter(TMP_DIRECTORY + "occupation_parent.csv");
-                    BufferedWriter occupation_parentBufferedWriter = new BufferedWriter(occupation_parentFileWriter)) {
-                
+                 BufferedWriter dumpBW = new BufferedWriter(dumpFW);
+                 FileWriter humanFW = new FileWriter(TMP_DIRECTORY + "human.csv");
+                 BufferedWriter humanBW = new BufferedWriter(humanFW);
+                 FileWriter humanCountryFW = new FileWriter(TMP_DIRECTORY + "human_country.csv");
+                 BufferedWriter humanCountryBW = new BufferedWriter(humanCountryFW);
+                 FileWriter humanOccupationFW = new FileWriter(TMP_DIRECTORY + "human_occupation.csv");
+                 BufferedWriter humanOccupationBW = new BufferedWriter(humanOccupationFW);
+                 FileWriter humanSiteLinkFW = new FileWriter(TMP_DIRECTORY + "human_sitelink.csv");
+                 BufferedWriter humanSiteLinkBW = new BufferedWriter(humanSiteLinkFW);
+                 FileWriter labelFW = new FileWriter(TMP_DIRECTORY + "label.csv");
+                 BufferedWriter labelBW = new BufferedWriter(labelFW);
+                 FileWriter occupationFileWriter = new FileWriter(TMP_DIRECTORY + "occupation.csv");
+                 BufferedWriter occupationBufferedWriter = new BufferedWriter(occupationFileWriter);
+                 FileWriter occupation_parentFileWriter = new FileWriter(TMP_DIRECTORY + "occupation_parent.csv");
+                 BufferedWriter occupation_parentBufferedWriter = new BufferedWriter(occupation_parentFileWriter)) {
+
                 String dumpDateStamp = dumpFile.getDateStamp();
                 dumpDateStamp = dumpDateStamp.substring(0, 4) + "-" + dumpDateStamp.substring(4, 6) + "-" + dumpDateStamp.substring(6, 8);
-                
+
                 dumpFW.write(dumpDateStamp);
-                
+
                 HumanProcessor gapsProcessor = new HumanProcessor(humanBW, humanCountryBW, humanOccupationBW, humanSiteLinkBW, labelBW);
                 dumpProcessingController.registerEntityDocumentProcessor(gapsProcessor, null, true);
-                
+
                 dumpProcessingController.processDump(dumpFile);
-                
+
                 LOGGER.info("Occupations...");
-                
+
                 Map<Long, Occupation> occupations = Occupation.getOccupations();
                 for (Long occupationId : occupations.keySet()) {
                     Occupation occupation = occupations.get(occupationId);
@@ -114,16 +117,16 @@ public class Main {
                         }
                     }
                 }
-                
+
             } catch (Exception e) {
                 LOGGER.error(e);
                 System.exit(1);
             }
-            
+
         }
-        
+
         LOGGER.info("Finished.");
-        
+
     }
-    
+
 }
