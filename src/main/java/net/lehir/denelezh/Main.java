@@ -49,10 +49,9 @@ public class Main {
         } else if (args.length == 1) {
             String date = args[0];
             dumpProcessingController.setOfflineMode(false);
-            dumpFile = new MwLocalDumpFile(DUMP_DIRECTORY + "dumpfiles/wikidatawiki/json-" + date + "/" + date + ".json.gz", DumpContentType.JSON, date, "wikidatawiki");
-
-            // if not downloading but using linked directory on wmcloud, need to programatically distinguish between dev and prod.
-            //dumpFile = new MwLocalDumpFile(DUMP_DIRECTORY + "dumpfiles/wikidatawiki/" + date + ".json.gz", DumpContentType.JSON, date, "wikidatawiki");
+            // this checking if the final dir endswith wikidata/ is not a great method, but in use for now to distinguish between dev and prod
+            String dumpDatePath = DUMP_DIRECTORY.endsWith("wikidata/") ? DUMP_DIRECTORY + date + ".json.gz" : DUMP_DIRECTORY + "dumpfiles/wikidatawiki/json-" + date + "/" + date + ".json.gz";
+            dumpFile = new MwLocalDumpFile(dumpDatePath, DumpContentType.JSON, date, "wikidatawiki");
             TMP_DIRECTORY = TMP_DIRECTORY + date + "/";
 
             String envMaxHumans = System.getenv("HUMANIKI_MAX_HUMANS");
